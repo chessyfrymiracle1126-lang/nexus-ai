@@ -1,0 +1,7 @@
+{
+  "name": "NexusAI",
+  "description": "Futuristic mobile AI assistant with multi-mode intelligence, quick prompt chips, voice output, and neural engine responses.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

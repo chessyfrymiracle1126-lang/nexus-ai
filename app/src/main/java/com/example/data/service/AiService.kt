@@ -229,7 +229,7 @@ class AiService {
             return "⚠️ **Gemini API Key Required**\n\nPlease open the Settings menu (gear icon in the top right) and enter your Google Gemini API key, or configure it via the Secrets panel in AI Studio."
         }
 
-        val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey"
+        val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=$apiKey"
 
         val jsonBody = JSONObject().apply {
             val contentsArray = JSONArray().apply {

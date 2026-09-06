@@ -1158,7 +1158,7 @@ textarea::placeholder {
   align-items: center;
 }
 
-.input-with-toggle input, .form-group input[type="url"] {
+.input-with-toggle input, .form-group input[type="url"], .form-select, .form-input {
   width: 100%;
   background: #090e1e;
   border: 1px solid #192545;
@@ -1171,8 +1171,18 @@ textarea::placeholder {
   transition: border-color 0.2s;
 }
 
-.input-with-toggle input:focus, .form-group input[type="url"]:focus {
+.input-with-toggle input:focus, .form-group input[type="url"]:focus, .form-select:focus, .form-input:focus {
   border-color: var(--neon-cyan);
+}
+
+.form-select {
+  cursor: pointer;
+}
+
+.form-select option {
+  background: #0b1226;
+  color: var(--text-primary);
+  padding: 8px;
 }
 
 .input-with-toggle input {

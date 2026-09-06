@@ -42,7 +42,7 @@
           </div>
           <div class="status-indicator" id="statusIndicator">
             <span class="status-dot" id="statusDot"></span>
-            <span class="status-text" id="statusText">Gemini 2.5 Flash</span>
+            <span class="status-text" id="statusText">Gemini 3.6 Flash</span>
           </div>
         </div>
       </div>
@@ -237,7 +237,7 @@
         </button>
       </div>
 
-      <p class="modal-desc">Connect directly to Google Gemini 2.5 Flash for live AI responses. Enter your API key below or switch providers at any time.</p>
+      <p class="modal-desc">Connect directly to Google Gemini 3.6 Flash for live AI responses. Enter your API key below or switch providers at any time.</p>
 
       <div class="form-group">
         <label class="form-label">Provider Service</label>
@@ -248,7 +248,7 @@
               <span class="provider-symbol">✨</span>
               <div class="provider-info">
                 <span class="provider-name">Google Gemini API</span>
-                <span class="provider-sub">gemini-2.5-flash live model</span>
+                <span class="provider-sub">gemini-3.6-flash live model</span>
               </div>
             </div>
           </label>
@@ -289,6 +289,18 @@
           </button>
         </div>
         <span class="field-hint" id="apiKeyHint">Stored securely in your browser's localStorage only. Get your free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color:var(--neon-cyan); text-decoration: underline;">Google AI Studio</a>.</span>
+      </div>
+
+      <div class="form-group" id="modelGroup">
+        <label class="form-label" for="modelSelect">Gemini Model</label>
+        <select id="modelSelect" class="form-select">
+          <option value="gemini-3.6-flash" selected>gemini-3.6-flash (Recommended & Latest)</option>
+          <option value="gemini-3.5-flash">gemini-3.5-flash (Fast)</option>
+          <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview (Advanced)</option>
+          <option value="custom">Custom model name...</option>
+        </select>
+        <input type="text" id="customModelNameInput" class="form-input hidden" style="margin-top: 8px;" placeholder="e.g. gemini-3.6-flash">
+        <span class="field-hint">Defaulted to <strong>models/gemini-3.6-flash</strong>.</span>
       </div>
 
       <div class="form-group hidden" id="endpointGroup">

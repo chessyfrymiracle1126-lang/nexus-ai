@@ -18,7 +18,7 @@ enum class AiProvider(
     val symbol: String
 ) {
     MOCK("mock", "Built-in Mock Neural Core (No API Key Required)", "⚡"),
-    GEMINI("gemini", "Google Gemini API (gemini-2.5-flash)", "✨"),
+    GEMINI("gemini", "Google Gemini API (gemini-3.6-flash)", "✨"),
     CUSTOM("custom", "Custom OpenAI-compatible Endpoint", "🌐");
 
     companion object {

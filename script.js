@@ -16,6 +16,7 @@
     startTime: 0,
     provider: 'gemini', // gemini (default), mock, custom
     apiKey: '',
+    geminiModel: 'gemini-3.6-flash',
     customEndpoint: 'https://api.openai.com/v1/chat/completions'
   };
 
@@ -94,6 +95,9 @@
     apiKeyLabel: document.getElementById('apiKeyLabel'),
     apiKeyHint: document.getElementById('apiKeyHint'),
     apiKeyInput: document.getElementById('apiKeyInput'),
+    modelGroup: document.getElementById('modelGroup'),
+    modelSelect: document.getElementById('modelSelect'),
+    customModelNameInput: document.getElementById('customModelNameInput'),
     endpointGroup: document.getElementById('endpointGroup'),
     endpointInput: document.getElementById('endpointInput'),
     toggleApiKeyBtn: document.getElementById('toggleApiKeyBtn'),
@@ -125,11 +129,19 @@
       const savedProvider = localStorage.getItem('nexus_provider');
       const savedApiKey = localStorage.getItem('nexus_api_key');
       const savedEndpoint = localStorage.getItem('nexus_endpoint');
+      const savedModel = localStorage.getItem('nexus_gemini_model');
 
       // Default to gemini if no provider is saved
       state.provider = savedProvider || 'gemini';
       if (savedApiKey) state.apiKey = savedApiKey;
       if (savedEndpoint) state.customEndpoint = savedEndpoint;
+
+      // Automatically upgrade from deprecated gemini-2.5-flash to gemini-3.6-flash
+      if (savedModel && savedModel !== 'gemini-2.5-flash') {
+        state.geminiModel = savedModel;
+      } else {
+        state.geminiModel = 'gemini-3.6-flash';
+      }
 
       // Update Radio in Modal
       const radio = document.querySelector(`input[name="provider"][value="${state.provider}"]`);
@@ -137,6 +149,21 @@
 
       elements.apiKeyInput.value = state.apiKey;
       elements.endpointInput.value = state.customEndpoint;
+
+      // Update Model selector in Modal
+      if (elements.modelSelect) {
+        const optionExists = Array.from(elements.modelSelect.options).some(opt => opt.value === state.geminiModel);
+        if (optionExists) {
+          elements.modelSelect.value = state.geminiModel;
+          if (elements.customModelNameInput) elements.customModelNameInput.classList.add('hidden');
+        } else {
+          elements.modelSelect.value = 'custom';
+          if (elements.customModelNameInput) {
+            elements.customModelNameInput.classList.remove('hidden');
+            elements.customModelNameInput.value = state.geminiModel;
+          }
+        }
+      }
 
       updateProviderInputsVisibility();
     } catch (e) {
@@ -148,12 +175,13 @@
     if (!elements.statusText || !elements.statusDot) return;
 
     if (state.provider === 'gemini') {
+      const modelDisplayName = state.geminiModel === 'gemini-3.6-flash' ? 'Gemini 3.6 Flash' : state.geminiModel;
       if (state.apiKey) {
-        elements.statusText.textContent = 'Gemini 2.5 Flash (Live)';
+        elements.statusText.textContent = `${modelDisplayName} (Live)`;
         elements.statusDot.style.background = '#10b981';
         elements.statusDot.style.boxShadow = '0 0 12px #10b981, 0 0 20px rgba(16, 185, 129, 0.4)';
       } else {
-        elements.statusText.textContent = 'Gemini 2.5 Flash (Key Required)';
+        elements.statusText.textContent = `${modelDisplayName} (Key Required)`;
         elements.statusDot.style.background = '#f59e0b';
         elements.statusDot.style.boxShadow = '0 0 10px #f59e0b';
       }
@@ -174,10 +202,19 @@
     state.apiKey = elements.apiKeyInput.value.trim();
     state.customEndpoint = elements.endpointInput.value.trim();
 
+    if (elements.modelSelect) {
+      if (elements.modelSelect.value === 'custom') {
+        state.geminiModel = (elements.customModelNameInput?.value.trim()) || 'gemini-3.6-flash';
+      } else {
+        state.geminiModel = elements.modelSelect.value;
+      }
+    }
+
     try {
       localStorage.setItem('nexus_provider', state.provider);
       localStorage.setItem('nexus_api_key', state.apiKey);
       localStorage.setItem('nexus_endpoint', state.customEndpoint);
+      localStorage.setItem('nexus_gemini_model', state.geminiModel);
     } catch (e) {
       console.warn('Unable to write to localStorage:', e);
     }
@@ -186,7 +223,8 @@
     closeSettingsModal();
 
     if (state.provider === 'gemini' && state.apiKey) {
-      showToast('Gemini 2.5 Flash connected successfully!');
+      const modelDisplayName = state.geminiModel === 'gemini-3.6-flash' ? 'Gemini 3.6 Flash' : state.geminiModel;
+      showToast(`${modelDisplayName} connected successfully!`);
     } else {
       showToast('Engine settings successfully saved');
     }
@@ -195,6 +233,7 @@
   function resetSettings() {
     state.provider = 'gemini';
     state.apiKey = '';
+    state.geminiModel = 'gemini-3.6-flash';
     state.customEndpoint = 'https://api.openai.com/v1/chat/completions';
 
     const geminiRadio = document.querySelector('input[name="provider"][value="gemini"]');
@@ -202,6 +241,13 @@
 
     elements.apiKeyInput.value = '';
     elements.endpointInput.value = state.customEndpoint;
+
+    if (elements.modelSelect) elements.modelSelect.value = 'gemini-3.6-flash';
+    if (elements.customModelNameInput) {
+      elements.customModelNameInput.classList.add('hidden');
+      elements.customModelNameInput.value = '';
+    }
+
     updateProviderInputsVisibility();
     updateHeaderStatus();
 
@@ -209,9 +255,10 @@
       localStorage.removeItem('nexus_provider');
       localStorage.removeItem('nexus_api_key');
       localStorage.removeItem('nexus_endpoint');
+      localStorage.removeItem('nexus_gemini_model');
     } catch (e) {}
 
-    showToast('Settings reset to Google Gemini 2.5 Flash');
+    showToast('Settings reset to Google Gemini 3.6 Flash');
   }
 
   function updateProviderInputsVisibility() {
@@ -220,6 +267,7 @@
 
     if (val === 'gemini') {
       elements.apiKeyGroup.classList.remove('hidden');
+      if (elements.modelGroup) elements.modelGroup.classList.remove('hidden');
       elements.endpointGroup.classList.add('hidden');
       if (elements.apiKeyLabel) elements.apiKeyLabel.textContent = 'Google Gemini API Key';
       if (elements.apiKeyInput) elements.apiKeyInput.placeholder = 'Enter your Gemini API key (AIzaSy...)';
@@ -228,6 +276,7 @@
       }
     } else if (val === 'custom') {
       elements.apiKeyGroup.classList.remove('hidden');
+      if (elements.modelGroup) elements.modelGroup.classList.add('hidden');
       elements.endpointGroup.classList.remove('hidden');
       if (elements.apiKeyLabel) elements.apiKeyLabel.textContent = 'Endpoint API Key';
       if (elements.apiKeyInput) elements.apiKeyInput.placeholder = 'Bearer token or API key...';
@@ -236,6 +285,7 @@
       }
     } else {
       elements.apiKeyGroup.classList.add('hidden');
+      if (elements.modelGroup) elements.modelGroup.classList.add('hidden');
       elements.endpointGroup.classList.add('hidden');
     }
   }
@@ -337,6 +387,21 @@
     elements.saveSettingsBtn.addEventListener('click', saveSettings);
     elements.resetSettingsBtn.addEventListener('click', resetSettings);
 
+    if (elements.modelSelect) {
+      elements.modelSelect.addEventListener('change', () => {
+        if (elements.modelSelect.value === 'custom') {
+          if (elements.customModelNameInput) {
+            elements.customModelNameInput.classList.remove('hidden');
+            elements.customModelNameInput.focus();
+          }
+        } else {
+          if (elements.customModelNameInput) {
+            elements.customModelNameInput.classList.add('hidden');
+          }
+        }
+      });
+    }
+
     // Escape Key Listener
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && !elements.settingsModal.classList.contains('hidden')) {
@@ -391,7 +456,8 @@
 
     // Validate API Key before starting generation
     if (state.provider === 'gemini' && !state.apiKey) {
-      showError('Google Gemini API Key is required to fetch real AI responses with gemini-2.5-flash. Please click "Open Settings" to input your API key.');
+      const modelLabel = state.geminiModel === 'gemini-3.6-flash' ? 'Gemini 3.6 Flash' : state.geminiModel;
+      showError(`Google Gemini API Key is required to fetch real AI responses with ${modelLabel}. Please click "Open Settings" to input your API key.`);
       openSettingsModal();
       return;
     }
@@ -646,10 +712,12 @@ Feel free to refine this query with additional specific constraints or tap a qui
     const temperature = mode === 'CREATIVE' ? 0.95 : mode === 'PRECISE' ? 0.2 : 0.7;
     const topP = mode === 'PRECISE' ? 0.8 : 0.95;
 
-    // Use user-specified model gemini-2.5-flash via Google Generative Language API
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(cleanKey)}`;
+    // Use models/gemini-3.6-flash as requested by Google Gemini API
+    const rawModel = (state.geminiModel || 'gemini-3.6-flash').trim();
+    const modelName = rawModel.replace(/^models\//, '') || 'gemini-3.6-flash';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(cleanKey)}`;
 
-    const systemPrompt = "You are NexusAI, an advanced futuristic AI assistant powered by Google Gemini 2.5 Flash. Provide direct, informative, beautifully structured responses formatted in Markdown with clear headings, bullet points, bold key highlights, and clean code blocks with syntax language tags when writing code.";
+    const systemPrompt = `You are NexusAI, an advanced futuristic AI assistant powered by Google Gemini (${modelName}). Provide direct, informative, beautifully structured responses formatted in Markdown with clear headings, bullet points, bold key highlights, and clean code blocks with syntax language tags when writing code.`;
 
     const requestBody = {
       contents: [{

@@ -16,7 +16,7 @@ class SettingsManager(context: Context) {
     }
 
     fun getSettings(): AiSettings {
-        val providerId = prefs.getString(KEY_PROVIDER, AiProvider.MOCK.id) ?: AiProvider.MOCK.id
+        val providerId = prefs.getString(KEY_PROVIDER, AiProvider.GEMINI.id) ?: AiProvider.GEMINI.id
         val apiKey = prefs.getString(KEY_API_KEY, "") ?: ""
         val endpoint = prefs.getString(
             KEY_ENDPOINT,

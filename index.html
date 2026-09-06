@@ -40,9 +40,9 @@
             <h1 class="brand-title">Nexus<span class="brand-gradient">AI</span></h1>
             <span class="version-tag">v2.4</span>
           </div>
-          <div class="status-indicator">
-            <span class="status-dot"></span>
-            <span class="status-text">Cortex-4 Neural Engine</span>
+          <div class="status-indicator" id="statusIndicator">
+            <span class="status-dot" id="statusDot"></span>
+            <span class="status-text" id="statusText">Gemini 2.5 Flash</span>
           </div>
         </div>
       </div>
@@ -158,7 +158,10 @@
         <div class="state-view error-view hidden" id="errorView">
           <div class="error-badge">⚠️ Generation Alert</div>
           <p class="error-message" id="errorMessage"></p>
-          <button class="retry-btn" id="retryBtn">Retry</button>
+          <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+            <button class="retry-btn" id="retryBtn">Retry</button>
+            <button class="action-btn" id="errorSettingsBtn">⚙️ Open Settings</button>
+          </div>
         </div>
 
         <!-- Success State -->
@@ -234,29 +237,29 @@
         </button>
       </div>
 
-      <p class="modal-desc">Configure your custom API key to switch between realistic built-in intelligence and live Gemini API responses.</p>
+      <p class="modal-desc">Connect directly to Google Gemini 2.5 Flash for live AI responses. Enter your API key below or switch providers at any time.</p>
 
       <div class="form-group">
         <label class="form-label">Provider Service</label>
         <div class="provider-options">
           <label class="provider-card">
-            <input type="radio" name="provider" value="mock" checked>
-            <div class="provider-content">
-              <span class="provider-symbol">⚡</span>
-              <div class="provider-info">
-                <span class="provider-name">Built-in Neural Core</span>
-                <span class="provider-sub">Zero configuration, high-speed synthesis</span>
-              </div>
-            </div>
-          </label>
-
-          <label class="provider-card">
-            <input type="radio" name="provider" value="gemini">
+            <input type="radio" name="provider" value="gemini" checked>
             <div class="provider-content">
               <span class="provider-symbol">✨</span>
               <div class="provider-info">
                 <span class="provider-name">Google Gemini API</span>
                 <span class="provider-sub">gemini-2.5-flash live model</span>
+              </div>
+            </div>
+          </label>
+
+          <label class="provider-card">
+            <input type="radio" name="provider" value="mock">
+            <div class="provider-content">
+              <span class="provider-symbol">⚡</span>
+              <div class="provider-info">
+                <span class="provider-name">Built-in Neural Core (Offline)</span>
+                <span class="provider-sub">Zero configuration, realistic simulated synthesis</span>
               </div>
             </div>
           </label>
@@ -274,10 +277,10 @@
         </div>
       </div>
 
-      <div class="form-group hidden" id="apiKeyGroup">
-        <label class="form-label" for="apiKeyInput">API Key</label>
+      <div class="form-group" id="apiKeyGroup">
+        <label class="form-label" id="apiKeyLabel" for="apiKeyInput">Google Gemini API Key</label>
         <div class="input-with-toggle">
-          <input type="password" id="apiKeyInput" placeholder="Enter your API key..." autocomplete="off">
+          <input type="password" id="apiKeyInput" placeholder="Enter your Gemini API key (AIzaSy...)" autocomplete="off">
           <button type="button" id="toggleApiKeyBtn" class="toggle-vis-btn" aria-label="Toggle API Key visibility">
             <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -285,7 +288,7 @@
             </svg>
           </button>
         </div>
-        <span class="field-hint">Stored securely in browser localStorage only.</span>
+        <span class="field-hint" id="apiKeyHint">Stored securely in your browser's localStorage only. Get your free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color:var(--neon-cyan); text-decoration: underline;">Google AI Studio</a>.</span>
       </div>
 
       <div class="form-group hidden" id="endpointGroup">

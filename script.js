@@ -14,7 +14,7 @@
     isGenerating: false,
     isSpeaking: false,
     startTime: 0,
-    provider: 'mock', // mock, gemini, custom
+    provider: 'gemini', // gemini (default), mock, custom
     apiKey: '',
     customEndpoint: 'https://api.openai.com/v1/chat/completions'
   };
@@ -70,6 +70,10 @@
     errorView: document.getElementById('errorView'),
     errorMessage: document.getElementById('errorMessage'),
     retryBtn: document.getElementById('retryBtn'),
+    errorSettingsBtn: document.getElementById('errorSettingsBtn'),
+    statusIndicator: document.getElementById('statusIndicator'),
+    statusDot: document.getElementById('statusDot'),
+    statusText: document.getElementById('statusText'),
     successView: document.getElementById('successView'),
     modeBadge: document.getElementById('modeBadge'),
     responseBody: document.getElementById('responseBody'),
@@ -87,6 +91,8 @@
     settingsModal: document.getElementById('settingsModal'),
     closeSettingsBtn: document.getElementById('closeSettingsBtn'),
     apiKeyGroup: document.getElementById('apiKeyGroup'),
+    apiKeyLabel: document.getElementById('apiKeyLabel'),
+    apiKeyHint: document.getElementById('apiKeyHint'),
     apiKeyInput: document.getElementById('apiKeyInput'),
     endpointGroup: document.getElementById('endpointGroup'),
     endpointInput: document.getElementById('endpointInput'),
@@ -108,6 +114,7 @@
     renderQuickPromptChips();
     setupEventListeners();
     updateCharCount();
+    updateHeaderStatus();
   }
 
   // =========================================================================
@@ -119,7 +126,8 @@
       const savedApiKey = localStorage.getItem('nexus_api_key');
       const savedEndpoint = localStorage.getItem('nexus_endpoint');
 
-      if (savedProvider) state.provider = savedProvider;
+      // Default to gemini if no provider is saved
+      state.provider = savedProvider || 'gemini';
       if (savedApiKey) state.apiKey = savedApiKey;
       if (savedEndpoint) state.customEndpoint = savedEndpoint;
 
@@ -133,6 +141,30 @@
       updateProviderInputsVisibility();
     } catch (e) {
       console.warn('LocalStorage unavailable:', e);
+    }
+  }
+
+  function updateHeaderStatus() {
+    if (!elements.statusText || !elements.statusDot) return;
+
+    if (state.provider === 'gemini') {
+      if (state.apiKey) {
+        elements.statusText.textContent = 'Gemini 2.5 Flash (Live)';
+        elements.statusDot.style.background = '#10b981';
+        elements.statusDot.style.boxShadow = '0 0 12px #10b981, 0 0 20px rgba(16, 185, 129, 0.4)';
+      } else {
+        elements.statusText.textContent = 'Gemini 2.5 Flash (Key Required)';
+        elements.statusDot.style.background = '#f59e0b';
+        elements.statusDot.style.boxShadow = '0 0 10px #f59e0b';
+      }
+    } else if (state.provider === 'mock') {
+      elements.statusText.textContent = 'Neural Core (Offline)';
+      elements.statusDot.style.background = '#00f2fe';
+      elements.statusDot.style.boxShadow = '0 0 10px #00f2fe';
+    } else {
+      elements.statusText.textContent = 'Custom Endpoint';
+      elements.statusDot.style.background = '#a855f7';
+      elements.statusDot.style.boxShadow = '0 0 10px #a855f7';
     }
   }
 
@@ -150,21 +182,28 @@
       console.warn('Unable to write to localStorage:', e);
     }
 
+    updateHeaderStatus();
     closeSettingsModal();
-    showToast('Engine settings successfully saved');
+
+    if (state.provider === 'gemini' && state.apiKey) {
+      showToast('Gemini 2.5 Flash connected successfully!');
+    } else {
+      showToast('Engine settings successfully saved');
+    }
   }
 
   function resetSettings() {
-    state.provider = 'mock';
+    state.provider = 'gemini';
     state.apiKey = '';
     state.customEndpoint = 'https://api.openai.com/v1/chat/completions';
 
-    const mockRadio = document.querySelector('input[name="provider"][value="mock"]');
-    if (mockRadio) mockRadio.checked = true;
+    const geminiRadio = document.querySelector('input[name="provider"][value="gemini"]');
+    if (geminiRadio) geminiRadio.checked = true;
 
     elements.apiKeyInput.value = '';
     elements.endpointInput.value = state.customEndpoint;
     updateProviderInputsVisibility();
+    updateHeaderStatus();
 
     try {
       localStorage.removeItem('nexus_provider');
@@ -172,19 +211,29 @@
       localStorage.removeItem('nexus_endpoint');
     } catch (e) {}
 
-    showToast('Settings reset to Built-in Neural Core');
+    showToast('Settings reset to Google Gemini 2.5 Flash');
   }
 
   function updateProviderInputsVisibility() {
     const selected = document.querySelector('input[name="provider"]:checked');
-    const val = selected ? selected.value : 'mock';
+    const val = selected ? selected.value : (state.provider || 'gemini');
 
     if (val === 'gemini') {
       elements.apiKeyGroup.classList.remove('hidden');
       elements.endpointGroup.classList.add('hidden');
+      if (elements.apiKeyLabel) elements.apiKeyLabel.textContent = 'Google Gemini API Key';
+      if (elements.apiKeyInput) elements.apiKeyInput.placeholder = 'Enter your Gemini API key (AIzaSy...)';
+      if (elements.apiKeyHint) {
+        elements.apiKeyHint.innerHTML = 'Stored securely in your browser\'s localStorage only. Get your free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color:var(--neon-cyan); text-decoration: underline;">Google AI Studio</a>.';
+      }
     } else if (val === 'custom') {
       elements.apiKeyGroup.classList.remove('hidden');
       elements.endpointGroup.classList.remove('hidden');
+      if (elements.apiKeyLabel) elements.apiKeyLabel.textContent = 'Endpoint API Key';
+      if (elements.apiKeyInput) elements.apiKeyInput.placeholder = 'Bearer token or API key...';
+      if (elements.apiKeyHint) {
+        elements.apiKeyHint.textContent = 'Transmitted as a Bearer token in the Authorization header.';
+      }
     } else {
       elements.apiKeyGroup.classList.add('hidden');
       elements.endpointGroup.classList.add('hidden');
@@ -263,6 +312,14 @@
 
     // Settings Modal
     elements.settingsBtn.addEventListener('click', openSettingsModal);
+    if (elements.statusIndicator) {
+      elements.statusIndicator.style.cursor = 'pointer';
+      elements.statusIndicator.title = 'Click to configure AI Engine';
+      elements.statusIndicator.addEventListener('click', openSettingsModal);
+    }
+    if (elements.errorSettingsBtn) {
+      elements.errorSettingsBtn.addEventListener('click', openSettingsModal);
+    }
     elements.closeSettingsBtn.addEventListener('click', closeSettingsModal);
     elements.settingsModal.addEventListener('click', (e) => {
       if (e.target === elements.settingsModal) closeSettingsModal();
@@ -332,6 +389,19 @@
       return;
     }
 
+    // Validate API Key before starting generation
+    if (state.provider === 'gemini' && !state.apiKey) {
+      showError('Google Gemini API Key is required to fetch real AI responses with gemini-2.5-flash. Please click "Open Settings" to input your API key.');
+      openSettingsModal();
+      return;
+    }
+
+    if (state.provider === 'custom' && !state.apiKey) {
+      showError('API Key is required for the custom endpoint. Please click "Open Settings" to configure.');
+      openSettingsModal();
+      return;
+    }
+
     // Stop active speech if speaking
     stopSpeech();
 
@@ -352,9 +422,9 @@
 
     try {
       let responseText = '';
-      if (state.provider === 'gemini' && state.apiKey) {
+      if (state.provider === 'gemini') {
         responseText = await callGeminiApi(prompt, state.mode, state.apiKey);
-      } else if (state.provider === 'custom' && state.apiKey) {
+      } else if (state.provider === 'custom') {
         responseText = await callCustomEndpoint(prompt, state.mode, state.customEndpoint, state.apiKey);
       } else {
         responseText = await callMockNeuralEngine(prompt, state.mode);
@@ -568,36 +638,80 @@ Feel free to refine this query with additional specific constraints or tap a qui
   // Provider: Google Gemini API
   // =========================================================================
   async function callGeminiApi(prompt, mode, apiKey) {
-    const temperature = mode === 'CREATIVE' ? 0.9 : mode === 'PRECISE' ? 0.2 : 0.7;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const cleanKey = (apiKey || '').trim();
+    if (!cleanKey) {
+      throw new Error('Please provide a valid Google Gemini API key.');
+    }
+
+    const temperature = mode === 'CREATIVE' ? 0.95 : mode === 'PRECISE' ? 0.2 : 0.7;
+    const topP = mode === 'PRECISE' ? 0.8 : 0.95;
+
+    // Use user-specified model gemini-2.5-flash via Google Generative Language API
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(cleanKey)}`;
+
+    const systemPrompt = "You are NexusAI, an advanced futuristic AI assistant powered by Google Gemini 2.5 Flash. Provide direct, informative, beautifully structured responses formatted in Markdown with clear headings, bullet points, bold key highlights, and clean code blocks with syntax language tags when writing code.";
 
     const requestBody = {
       contents: [{
+        role: 'user',
         parts: [{ text: prompt }]
       }],
+      systemInstruction: {
+        parts: [{ text: systemPrompt }]
+      },
       generationConfig: {
         temperature: temperature,
+        topP: topP,
         maxOutputTokens: 2048
       }
     };
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
-    });
+    let response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      });
+    } catch (networkErr) {
+      throw new Error(`Network connection error: ${networkErr.message}. Please check your internet connection.`);
+    }
 
     if (!response.ok) {
       const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson.error?.message || `Gemini API error: ${response.status} ${response.statusText}`);
+      const rawMsg = errJson.error?.message || `HTTP ${response.status} ${response.statusText}`;
+
+      if (response.status === 400) {
+        throw new Error(`Gemini API Error (400): ${rawMsg}. Please check that your API key is correctly formatted.`);
+      } else if (response.status === 403) {
+        throw new Error(`Gemini API Authentication Error (403): Invalid API key or quota exceeded. Please verify your key at Google AI Studio (aistudio.google.com).`);
+      } else if (response.status === 429) {
+        throw new Error(`Gemini API Rate Limit Exceeded (429): You have hit the request quota. Please wait a moment and retry.`);
+      } else {
+        throw new Error(`Gemini API Error (${response.status}): ${rawMsg}`);
+      }
     }
 
     const data = await response.json();
     const candidate = data.candidates?.[0];
-    const text = candidate?.content?.parts?.[0]?.text;
+
+    if (!candidate) {
+      if (data.promptFeedback?.blockReason) {
+        throw new Error(`Request was blocked by Gemini safety policy: ${data.promptFeedback.blockReason}`);
+      }
+      throw new Error('Gemini API returned an empty response candidate.');
+    }
+
+    const parts = candidate.content?.parts || [];
+    const text = parts.map(p => p.text || '').join('').trim();
 
     if (!text) {
-      throw new Error('Gemini API returned an empty response.');
+      if (candidate.finishReason && candidate.finishReason !== 'STOP') {
+        throw new Error(`Gemini stopped generation with reason: ${candidate.finishReason}`);
+      }
+      throw new Error('Gemini returned an empty response.');
     }
 
     return text;

@@ -33,7 +33,7 @@ data class QuickPrompt(
 )
 
 data class AiSettings(
-    val provider: AiProvider = AiProvider.MOCK,
+    val provider: AiProvider = AiProvider.GEMINI,
     val apiKey: String = "",
     val customEndpoint: String = "https://api.openai.com/v1/chat/completions"
 )
